@@ -31,7 +31,7 @@ app.get('/api/price-stream', (req, res) => {
   };
 
   // Send data every 5 seconds
-  const interval = setInterval(sendPriceUpdate, 2500);
+  const interval = setInterval(sendPriceUpdate, 3600000);
 
   // Send first update immediately
   sendPriceUpdate();
