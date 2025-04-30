@@ -8,16 +8,38 @@ app.use(cors());
 let currentPrice = 100.00;
 
 function generateNextPrice() {
-  const change = parseFloat((Math.random() * 20 - 10).toFixed(2)); // Change between -1.00 to +1.00
+  const change = parseFloat((Math.random() * 20 - 10).toFixed(2)); // Change between -10 to +10
   currentPrice = parseFloat(currentPrice) + change;
   return parseFloat(currentPrice.toFixed(2));
 }
 
-app.get('/api/price', (req, res) => {
-  const price = generateNextPrice();
-  res.json({
-    timestamp: new Date().toISOString(),
-    price: price
+// Server-Sent Events stream
+app.get('/api/price-stream', (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+
+  const sendPriceUpdate = () => {
+    const price = generateNextPrice();
+    const data = {
+      timestamp: new Date().toISOString(),
+      price: price,
+    };
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  // Send data every 5 seconds
+  const interval = setInterval(sendPriceUpdate, 2500);
+
+  // Send first update immediately
+  sendPriceUpdate();
+
+  // Clean up on client disconnect
+  req.on('close', () => {
+    clearInterval(interval);
+    res.end();
   });
 });
 
